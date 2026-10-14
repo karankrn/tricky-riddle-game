@@ -27,7 +27,7 @@ public class MainActivity extends AppCompatActivity {
     private int score = 0;
     private int currentLevel = 0;
 
-    // 3 Lifeline counts
+    // 3 Lifelines starting counts
     private int count5050 = 1;
     private int countHint = 1;
     private int countSkip = 1;
@@ -74,8 +74,13 @@ public class MainActivity extends AppCompatActivity {
         btnHint = findViewById(R.id.btnHint);
         btnSkip = findViewById(R.id.btnSkip);
 
-        MobileAds.initialize(this, initializationStatus -> {});
-        loadRewardedAd();
+        // Safe ad initialization
+        try {
+            MobileAds.initialize(this, initializationStatus -> {});
+            loadRewardedAd();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
         for (int i = 0; i < optionButtons.length; i++) {
             final int index = i;
@@ -121,7 +126,9 @@ public class MainActivity extends AppCompatActivity {
             tvScore.setText("⭐ Final Score: " + score);
             tvRiddle.setText("🎉 Hurray! You solved all the riddles!");
             tvHint.setText("");
-            for (Button b : optionButtons) b.setVisibility(View.GONE);
+            for (Button b : optionButtons) {
+                b.setVisibility(View.GONE);
+            }
             btn5050.setEnabled(false);
             btnHint.setEnabled(false);
             btnSkip.setEnabled(false);
@@ -184,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
             public void onAdLoaded(@NonNull RewardedAd ad) {
                 rewardedAd = ad;
             }
+
             @Override
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                 rewardedAd = null;
@@ -206,4 +214,4 @@ public class MainActivity extends AppCompatActivity {
             loadRewardedAd();
         }
     }
-            }
+                           }
