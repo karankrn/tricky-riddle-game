@@ -1,8 +1,8 @@
 package com.riddle.game;
 
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.annotation.NonNull;
@@ -14,11 +14,15 @@ import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
     private TextView tvRiddle, tvLevel, tvHint;
-    private EditText etAnswer;
-    private Button btnSubmit, btnHint;
+    private Button[] optionButtons = new Button[4];
+    private Button btn5050, btnHint;
 
     private RewardedAd rewardedAd;
     private final String TEST_AD_UNIT_ID = "ca-app-pub-3940256099942544/5224354917";
@@ -29,7 +33,16 @@ public class MainActivity extends AppCompatActivity {
         "What has to be broken before you can use it?"
     };
 
-    private final String[] answers = {"echo", "map", "egg"};
+    // 4 choices for each question
+    private final String[][] options = {
+        {"Echo", "Shadow", "River", "Mirror"},
+        {"Globe", "Book", "Map", "Painting"},
+        {"Glass", "Egg", "Promise", "Lock"}
+    };
+
+    // Zero-based index of the correct answer: 0 -> Echo, 2 -> Map, 1 -> Egg
+    private final int[] correctAnswers = {0, 2, 1};
+
     private final String[] hints = {
         "Hint: It repeats your own voice back to you.",
         "Hint: You hold it in your hand when traveling.",
@@ -46,41 +59,82 @@ public class MainActivity extends AppCompatActivity {
         tvLevel = findViewById(R.id.tvLevel);
         tvRiddle = findViewById(R.id.tvRiddle);
         tvHint = findViewById(R.id.tvHint);
-        etAnswer = findViewById(R.id.etAnswer);
-        btnSubmit = findViewById(R.id.btnSubmit);
+
+        optionButtons[0] = findViewById(R.id.btnOption1);
+        optionButtons[1] = findViewById(R.id.btnOption2);
+        optionButtons[2] = findViewById(R.id.btnOption3);
+        optionButtons[3] = findViewById(R.id.btnOption4);
+
+        btn5050 = findViewById(R.id.btn5050);
         btnHint = findViewById(R.id.btnHint);
 
         MobileAds.initialize(this, initializationStatus -> {});
         loadRewardedAd();
 
-        loadCurrentLevel();
+        // Assign click listener to each option button
+        for (int i = 0; i < optionButtons.length; i++) {
+            final int selectedIndex = i;
+            optionButtons[i].setOnClickListener(v -> checkAnswer(selectedIndex));
+        }
 
-        btnSubmit.setOnClickListener(v -> checkAnswer());
-        btnHint.setOnClickListener(v -> showAdForHint());
+        btn5050.setOnClickListener(v -> showAdForReward("5050"));
+        btnHint.setOnClickListener(v -> showAdForReward("hint"));
+
+        loadCurrentLevel();
     }
 
     private void loadCurrentLevel() {
         tvLevel.setText("Level " + (currentLevel + 1));
         tvRiddle.setText(riddles[currentLevel]);
         tvHint.setText("");
-        etAnswer.setText("");
+
+        // Reset and populate option buttons
+        for (int i = 0; i < 4; i++) {
+            optionButtons[i].setText(options[currentLevel][i]);
+            optionButtons[i].setVisibility(View.VISIBLE);
+            optionButtons[i].setEnabled(true);
+        }
+
+        btn5050.setEnabled(true);
     }
 
-    private void checkAnswer() {
-        String input = etAnswer.getText().toString().trim().toLowerCase();
-        if (input.equals(answers[currentLevel])) {
+    private void checkAnswer(int selectedIndex) {
+        if (selectedIndex == correctAnswers[currentLevel]) {
             Toast.makeText(this, "Correct! Next Level Unlocked.", Toast.LENGTH_SHORT).show();
             currentLevel++;
             if (currentLevel < riddles.length) {
                 loadCurrentLevel();
             } else {
                 tvRiddle.setText("Congratulations! You completed all levels.");
-                btnSubmit.setEnabled(false);
+                tvHint.setText("");
+                for (Button btn : optionButtons) {
+                    btn.setVisibility(View.GONE);
+                }
+                btn5050.setEnabled(false);
                 btnHint.setEnabled(false);
             }
         } else {
-            Toast.makeText(this, "Wrong answer, try again or use a hint!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Wrong answer, try again or use a lifeline!", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private void apply5050() {
+        int correctIndex = correctAnswers[currentLevel];
+        List<Integer> wrongIndices = new ArrayList<>();
+
+        for (int i = 0; i < 4; i++) {
+            if (i != correctIndex && optionButtons[i].getVisibility() == View.VISIBLE) {
+                wrongIndices.add(i);
+            }
+        }
+
+        // Hide 2 random wrong options
+        Collections.shuffle(wrongIndices);
+        if (wrongIndices.size() >= 2) {
+            optionButtons[wrongIndices.get(0)].setVisibility(View.INVISIBLE);
+            optionButtons[wrongIndices.get(1)].setVisibility(View.INVISIBLE);
+        }
+        btn5050.setEnabled(false);
     }
 
     private void loadRewardedAd() {
@@ -98,16 +152,21 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void showAdForHint() {
+    private void showAdForReward(String type) {
         if (rewardedAd != null) {
             rewardedAd.show(this, rewardItem -> {
-                tvHint.setText(hints[currentLevel]);
-                Toast.makeText(MainActivity.this, "Hint unlocked!", Toast.LENGTH_SHORT).show();
+                if ("5050".equals(type)) {
+                    apply5050();
+                    Toast.makeText(MainActivity.this, "50:50 Lifeline applied!", Toast.LENGTH_SHORT).show();
+                } else if ("hint".equals(type)) {
+                    tvHint.setText(hints[currentLevel]);
+                    Toast.makeText(MainActivity.this, "Hint unlocked!", Toast.LENGTH_SHORT).show();
+                }
             });
             loadRewardedAd();
         } else {
-            Toast.makeText(this, "Ad loading, please try again in a few seconds.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Ad is loading, please try again in a few seconds.", Toast.LENGTH_SHORT).show();
             loadRewardedAd();
         }
     }
-}
+    }
