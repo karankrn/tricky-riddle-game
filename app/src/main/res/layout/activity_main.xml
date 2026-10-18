@@ -1,140 +1,204 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="20dp"
-    android:background="#F8F9FE"
-    android:gravity="center_horizontal">
+    android:background="#F8F9FE">
 
-    <!-- Header: Score & Level -->
+    <!-- Active Game Layout -->
     <LinearLayout
+        android:id="@+id/layoutGame"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="16dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="20dp">
 
-        <TextView
-            android:id="@+id/tvScore"
-            android:layout_width="0dp"
+        <!-- Top Bar: Player Name, Score, Hearts, Pause -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textSize="18sp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/tvPlayerName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="#37474F"
+                android:text="Player" />
+
+            <TextView
+                android:id="@+id/tvHearts"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:textColor="#D32F2F"
+                android:text="❤️❤️❤️"
+                android:layout_marginEnd="12dp" />
+
+            <Button
+                android:id="@+id/btnPause"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:text="⏸"
+                android:textSize="14sp"
+                android:padding="0dp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:id="@+id/tvScore"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#FF9800"
+                android:text="⭐ Score: 0" />
+
+            <TextView
+                android:id="@+id/tvLevel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="#3F51B5"
+                android:text="Level 1" />
+        </LinearLayout>
+
+        <!-- Riddle Box -->
+        <TextView
+            android:id="@+id/tvRiddle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="110dp"
+            android:padding="16dp"
+            android:textSize="17sp"
             android:textStyle="bold"
-            android:textColor="#E65100"
-            android:text="⭐ Score: 0" />
+            android:textColor="#212121"
+            android:background="#FFFFFF"
+            android:elevation="3dp"
+            android:gravity="center"
+            android:layout_marginBottom="10dp" />
 
         <TextView
-            android:id="@+id/tvLevel"
+            android:id="@+id/tvHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="30dp"
+            android:textSize="14sp"
+            android:textStyle="italic"
+            android:textColor="#E91E63"
+            android:gravity="center"
+            android:layout_marginBottom="14dp" />
+
+        <!-- 4 Options -->
+        <Button
+            android:id="@+id/btnOption1"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:textAllCaps="false"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnOption2"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:textAllCaps="false"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnOption3"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:textAllCaps="false"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnOption4"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:textAllCaps="false"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 2 Lifelines: Hint & Skip -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:weightSum="2">
+
+            <Button
+                android:id="@+id/btnHint"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="6dp"
+                android:text="💡 Hint (1)" />
+
+            <Button
+                android:id="@+id/btnSkip"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:text="🚀 Skip (1)" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Pause / Menu Modal Overlay -->
+    <LinearLayout
+        android:id="@+id/layoutMenuOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#CC000000"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:padding="32dp"
+        android:visibility="gone">
+
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="18sp"
+            android:text="🎮 GAME PAUSED"
+            android:textColor="#FFFFFF"
+            android:textSize="26sp"
             android:textStyle="bold"
-            android:textColor="#3F51B5"
-            android:text="Level 1" />
+            android:layout_marginBottom="24dp" />
+
+        <Button
+            android:id="@+id/btnResume"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:text="▶️ Resume"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btnRestart"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:text="🔄 Restart From Start"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btnViewLeaderboard"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:text="🏆 High Scores"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/btnChangeAlias"
+            android:layout_width="220dp"
+            android:layout_height="wrap_content"
+            android:text="✏️ Change Name" />
     </LinearLayout>
-
-    <!-- Riddle Question Box -->
-    <TextView
-        android:id="@+id/tvRiddle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:minHeight="110dp"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        android:textColor="#263238"
-        android:lineSpacingExtra="4dp"
-        android:padding="16dp"
-        android:background="#FFFFFF"
-        android:elevation="3dp"
-        android:textAlignment="center"
-        android:gravity="center"
-        android:layout_marginBottom="12dp" />
-
-    <!-- Hint Box -->
-    <TextView
-        android:id="@+id/tvHint"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="15sp"
-        android:textStyle="italic"
-        android:textColor="#D81B60"
-        android:textAlignment="center"
-        android:gravity="center"
-        android:layout_marginBottom="16dp" />
-
-    <!-- 4 Option Buttons -->
-    <Button
-        android:id="@+id/btnOption1"
-        android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:textSize="16sp"
-        android:textAllCaps="false"
-        android:layout_marginBottom="10dp" />
-
-    <Button
-        android:id="@+id/btnOption2"
-        android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:textSize="16sp"
-        android:textAllCaps="false"
-        android:layout_marginBottom="10dp" />
-
-    <Button
-        android:id="@+id/btnOption3"
-        android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:textSize="16sp"
-        android:textAllCaps="false"
-        android:layout_marginBottom="10dp" />
-
-    <Button
-        android:id="@+id/btnOption4"
-        android:layout_width="match_parent"
-        android:layout_height="54dp"
-        android:textSize="16sp"
-        android:textAllCaps="false"
-        android:layout_marginBottom="24dp" />
-
-    <!-- 3 Lifelines Bar (Using explicit left/right margins to prevent API version crashes) -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="3">
-
-        <Button
-            android:id="@+id/btn5050"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginEnd="4dp"
-            android:layout_marginRight="4dp"
-            android:textSize="12sp"
-            android:text="🪄 50:50 (1)" />
-
-        <Button
-            android:id="@+id/btnHint"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="2dp"
-            android:layout_marginEnd="2dp"
-            android:layout_marginLeft="2dp"
-            android:layout_marginRight="2dp"
-            android:textSize="12sp"
-            android:text="💡 Hint (1)" />
-
-        <Button
-            android:id="@+id/btnSkip"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_marginStart="4dp"
-            android:layout_marginLeft="4dp"
-            android:textSize="12sp"
-            android:text="🚀 Skip (1)" />
-    </LinearLayout>
-
-</LinearLayout>
+</FrameLayout>
