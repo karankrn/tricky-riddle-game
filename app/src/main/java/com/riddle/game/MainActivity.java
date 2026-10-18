@@ -1,7 +1,6 @@
 package com.riddle.game;
 
 import android.animation.ObjectAnimator;
-import android.animation.PropertyValuesHolder;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
@@ -13,6 +12,7 @@ import android.view.animation.CycleInterpolator;
 import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -35,7 +35,8 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private TextView tvPlayerName, tvScore, tvLevel, tvHearts, tvRiddle, tvHint;
+    private TextView tvPlayerName, tvScore, tvLevel, tvHearts, tvRiddle, tvHint, tvMascotDialogue;
+    private ImageView ivMascot;
     private Button[] optionButtons = new Button[4];
     private Button btnHint, btnSkip, btnPause;
     private LinearLayout layoutMenuOverlay;
@@ -50,10 +51,8 @@ public class MainActivity extends AppCompatActivity {
     private int countHint = 1;
     private int countSkip = 1;
 
-    // ToneGenerator for lag-free audio feedback
     private ToneGenerator toneGenerator;
 
-    // Google AdMob Ad Units (Official Test IDs)
     private RewardedAd rewardedAd;
     private InterstitialAd interstitialAd;
     private final String TEST_REWARDED_ID = "ca-app-pub-3940256099942544/5224354917";
@@ -80,13 +79,14 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Views
         tvPlayerName = findViewById(R.id.tvPlayerName);
         tvScore = findViewById(R.id.tvScore);
         tvLevel = findViewById(R.id.tvLevel);
         tvHearts = findViewById(R.id.tvHearts);
         tvRiddle = findViewById(R.id.tvRiddle);
         tvHint = findViewById(R.id.tvHint);
+        tvMascotDialogue = findViewById(R.id.tvMascotDialogue);
+        ivMascot = findViewById(R.id.ivMascot);
 
         optionButtons[0] = findViewById(R.id.btnOption1);
         optionButtons[1] = findViewById(R.id.btnOption2);
@@ -105,7 +105,6 @@ public class MainActivity extends AppCompatActivity {
 
         adViewBanner = findViewById(R.id.adViewBanner);
 
-        // Sound effects initialization
         try {
             toneGenerator = new ToneGenerator(AudioManager.STREAM_MUSIC, 80);
         } catch (Exception ignored) {}
@@ -119,7 +118,6 @@ public class MainActivity extends AppCompatActivity {
             initGame();
         }
 
-        // Initialize Mobile Ads safely in background
         new Thread(() -> {
             try {
                 MobileAds.initialize(MainActivity.this, initializationStatus -> {});
@@ -131,7 +129,6 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception ignored) {}
         }).start();
 
-        // Option click handling
         for (int i = 0; i < optionButtons.length; i++) {
             final int index = i;
             optionButtons[i].setOnClickListener(v -> checkAnswer(index, optionButtons[index]));
@@ -140,7 +137,6 @@ public class MainActivity extends AppCompatActivity {
         btnHint.setOnClickListener(v -> handleLifeline("hint"));
         btnSkip.setOnClickListener(v -> handleLifeline("skip"));
 
-        // Pause Menu Handlers
         btnPause.setOnClickListener(v -> layoutMenuOverlay.setVisibility(View.VISIBLE));
         btnResume.setOnClickListener(v -> layoutMenuOverlay.setVisibility(View.GONE));
         btnRestart.setOnClickListener(v -> {
@@ -200,8 +196,9 @@ public class MainActivity extends AppCompatActivity {
     private void loadCurrentRiddle() {
         if (currentLevelIndex >= riddleList.size()) {
             saveScore(score);
-            tvRiddle.setText("🎉 Hurray " + playerName + "! You completed every riddle!");
+            tvRiddle.setText("🎉 Hurray " + playerName + "! You solved every riddle!");
             tvHint.setText("");
+            tvMascotDialogue.setText("🏆 You are a Master Brain!");
             for (Button b : optionButtons) b.setVisibility(View.GONE);
             btnHint.setEnabled(false);
             btnSkip.setEnabled(false);
@@ -210,9 +207,10 @@ public class MainActivity extends AppCompatActivity {
         }
 
         RiddleItem item = riddleList.get(currentLevelIndex);
-        tvLevel.setText("Level " + (currentLevelIndex + 1));
+        tvLevel.setText("🏆 Level " + (currentLevelIndex + 1));
         tvRiddle.setText(item.question);
         tvHint.setText("");
+        tvMascotDialogue.setText("Can you crack this puzzle, " + playerName + "?");
 
         for (int i = 0; i < 4; i++) {
             optionButtons[i].setText(item.options[i]);
@@ -229,7 +227,9 @@ public class MainActivity extends AppCompatActivity {
             score += 100;
             saveScore(score);
             animateScorePulse();
-            Toast.makeText(this, "🌟 Superb! +100 Points!", Toast.LENGTH_SHORT).show();
+            animateMascotBounce();
+            tvMascotDialogue.setText("🎉 Woohoo! Super smart!");
+            Toast.makeText(this, "🌟 Awesome! +100 Points!", Toast.LENGTH_SHORT).show();
             currentLevelIndex++;
             loadCurrentRiddle();
         } else {
@@ -237,27 +237,23 @@ public class MainActivity extends AppCompatActivity {
             animateShake(clickedBtn);
             hearts--;
             updateHeartsUI();
+            tvMascotDialogue.setText("🧐 Oops! Try another guess!");
 
             if (hearts <= 0) {
                 showReviveOrGameOverDialog();
             } else {
-                Toast.makeText(this, "❌ Oops! Lost 1 Heart!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "❌ Ouch! Lost 1 Heart!", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
-    // High Monetization: Revive Second Chance Prompt
     private void showReviveOrGameOverDialog() {
         new AlertDialog.Builder(this)
             .setTitle("💔 Out of Hearts!")
-            .setMessage("Do you want to watch a quick ad to get 2 Hearts and keep your current score?")
+            .setMessage("Watch a short video to revive with 2 Hearts and protect your score!")
             .setCancelable(false)
-            .setPositiveButton("📺 Revive (Watch Ad)", (dialog, which) -> {
-                showAdToRevive();
-            })
-            .setNegativeButton("Restart from Level 1", (dialog, which) -> {
-                restartGameFromBeginning();
-            })
+            .setPositiveButton("📺 Revive (Watch Ad)", (dialog, which) -> showAdToRevive())
+            .setNegativeButton("Restart from Level 1", (dialog, which) -> restartGameFromBeginning())
             .show();
     }
 
@@ -266,17 +262,16 @@ public class MainActivity extends AppCompatActivity {
             rewardedAd.show(this, rewardItem -> {
                 hearts = 2;
                 updateHeartsUI();
+                tvMascotDialogue.setText("💖 Second Chance! Go for it!");
                 Toast.makeText(MainActivity.this, "💖 Revived with 2 Hearts!", Toast.LENGTH_SHORT).show();
             });
             loadRewardedAd();
         } else {
-            Toast.makeText(this, "Ad is loading, restarting game...", Toast.LENGTH_SHORT).show();
             restartGameFromBeginning();
             loadRewardedAd();
         }
     }
 
-    // Animations & Sound
     private void animateShake(View view) {
         TranslateAnimation shake = new TranslateAnimation(0, 15, 0, 0);
         shake.setDuration(400);
@@ -293,6 +288,14 @@ public class MainActivity extends AppCompatActivity {
         scaleY.start();
     }
 
+    private void animateMascotBounce() {
+        if (ivMascot != null) {
+            ObjectAnimator bounce = ObjectAnimator.ofFloat(ivMascot, "translationY", 0f, -18f, 0f);
+            bounce.setDuration(300);
+            bounce.start();
+        }
+    }
+
     private void playSuccessSound() {
         if (toneGenerator != null) {
             toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2, 180);
@@ -306,7 +309,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void updateUI() {
-        tvPlayerName.setText("👤 " + playerName);
+        tvPlayerName.setText("👤 Hero: " + playerName);
         tvScore.setText("⭐ Score: " + score);
         updateHeartsUI();
         btnHint.setText(countHint > 0 ? "💡 Hint (" + countHint + ")" : "💡 Hint (+1 🎬)");
@@ -325,6 +328,7 @@ public class MainActivity extends AppCompatActivity {
             if (countHint > 0) {
                 countHint--;
                 tvHint.setText(riddleList.get(currentLevelIndex).hint);
+                tvMascotDialogue.setText("💡 Here is your secret clue!");
                 updateUI();
             } else {
                 showAdForLifeline("hint");
@@ -333,6 +337,7 @@ public class MainActivity extends AppCompatActivity {
             if (countSkip > 0) {
                 countSkip--;
                 currentLevelIndex++;
+                tvMascotDialogue.setText("🚀 Rocket skip used!");
                 loadCurrentRiddle();
             } else {
                 showAdForLifeline("skip");
@@ -349,14 +354,14 @@ public class MainActivity extends AppCompatActivity {
         input.setHint("e.g. BrainyKid");
         builder.setView(input);
 
-        builder.setPositiveButton("Save", (dialog, which) -> {
+        builder.setPositiveButton("Let's Play!", (dialog, which) -> {
             String name = input.getText().toString().trim();
             if (!name.isEmpty()) {
                 playerName = name;
                 SharedPreferences.Editor editor = getSharedPreferences("TrickyRiddlePrefs", MODE_PRIVATE).edit();
                 editor.putString("player_alias", playerName);
                 editor.apply();
-                tvPlayerName.setText("👤 " + playerName);
+                tvPlayerName.setText("👤 Hero: " + playerName);
             }
             if (startAfter) {
                 showStartInterstitial();
@@ -387,7 +392,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Ads logic
     private void loadBannerAd() {
         AdRequest adRequest = new AdRequest.Builder().build();
         adViewBanner.loadAd(adRequest);
@@ -453,4 +457,4 @@ public class MainActivity extends AppCompatActivity {
         }
         super.onDestroy();
     }
-                }
+                                              }
