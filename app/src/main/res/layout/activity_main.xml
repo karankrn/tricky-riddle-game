@@ -217,50 +217,121 @@
     </LinearLayout>
 
     <!-- Pause Menu Modal -->
+    <!-- Pause / Main Menu Overlay -->
     <LinearLayout
         android:id="@+id/layoutMenuOverlay"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#D9000000"
+        android:background="#E6000000"
         android:orientation="vertical"
         android:gravity="center"
-        android:padding="32dp"
+        android:padding="24dp"
+        android:clickable="true"
+        android:focusable="true"
         android:visibility="gone">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Rounded Menu White Card -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="🎮 GAME PAUSED"
-            android:textColor="#FFFFFF"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="24dp" />
+            android:orientation="vertical"
+            android:gravity="center"
+            android:background="@drawable/speech_bubble_card"
+            android:elevation="8dp"
+            android:padding="24dp">
 
-        <Button
-            android:id="@+id/btnResume"
-            android:layout_width="220dp"
-            android:layout_height="wrap_content"
-            android:text="▶️ Keep Playing"
-            android:layout_marginBottom="12dp" />
+            <!-- Menu Header -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🎮 GAME PAUSED"
+                android:textColor="#5E35B1"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="12dp" />
 
-        <Button
-            android:id="@+id/btnRestart"
-            android:layout_width="220dp"
-            android:layout_height="wrap_content"
-            android:text="🔄 Restart From Start"
-            android:layout_marginBottom="12dp" />
+            <!-- Quick In-Game Summary -->
+            <TextView
+                android:id="@+id/tvMenuStats"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Level 1 • Score: 0 • ❤️❤️❤️"
+                android:textColor="#37474F"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="20dp" />
 
-        <Button
-            android:id="@+id/btnViewLeaderboard"
-            android:layout_width="220dp"
-            android:layout_height="wrap_content"
-            android:text="🏆 Hall of Fame"
-            android:layout_marginBottom="12dp" />
+            <!-- 1. Resume -->
+            <Button
+                android:id="@+id/btnResume"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/btn_candy_green"
+                android:text="▶️ Keep Playing"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textAllCaps="false"
+                android:layout_marginBottom="10dp" />
 
-        <Button
-            android:id="@+id/btnChangeAlias"
-            android:layout_width="220dp"
-            android:layout_height="wrap_content"
-            android:text="✏️ Change Hero Name" />
+            <!-- 2. Sound Toggle (Audio On/Off) -->
+            <Button
+                android:id="@+id/btnToggleSound"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/btn_candy_blue"
+                android:text="🔊 Sound: ON"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textAllCaps="false"
+                android:layout_marginBottom="10dp" />
+
+            <!-- 3. High Scores -->
+            <Button
+                android:id="@+id/btnViewLeaderboard"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/btn_candy_orange"
+                android:text="🏆 Hall of Fame"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textAllCaps="false"
+                android:layout_marginBottom="10dp" />
+
+            <!-- 4. Change Name -->
+            <Button
+                android:id="@+id/btnChangeAlias"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:background="@drawable/btn_candy_pink"
+                android:text="✏️ Change Hero Name"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="15sp"
+                android:textAllCaps="false"
+                android:layout_marginBottom="10dp" />
+
+            <!-- 5. Restart -->
+            <Button
+                android:id="@+id/btnRestart"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="🔄 Restart Game"
+                android:textSize="14sp"
+                android:textAllCaps="false"
+                android:layout_marginBottom="6dp" />
+
+            <!-- 6. Quit App -->
+            <Button
+                android:id="@+id/btnQuitGame"
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:text="🚪 Exit Game"
+                android:textColor="#D32F2F"
+                android:textSize="13sp"
+                android:textAllCaps="false" />
+        </LinearLayout>
     </LinearLayout>
 </FrameLayout>
