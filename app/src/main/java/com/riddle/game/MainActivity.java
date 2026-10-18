@@ -516,4 +516,8 @@ public class MainActivity extends AppCompatActivity {
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                 rewardedAd = null;
             }
-      
+        }
+
+                        }
+}
+
