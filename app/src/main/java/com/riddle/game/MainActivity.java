@@ -111,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
 
         adViewBanner = findViewById(R.id.adViewBanner);
 
-        // Initialize sound generator
+        // Sound Generator
         try {
             toneGenerator = new ToneGenerator(AudioManager.STREAM_MUSIC, 80);
         } catch (Exception ignored) {}
@@ -125,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
             initGame();
         }
 
-        // Initialize Ads
+        // Ads initialization in background
         new Thread(() -> {
             try {
                 MobileAds.initialize(MainActivity.this, initializationStatus -> {});
@@ -137,7 +137,7 @@ public class MainActivity extends AppCompatActivity {
             } catch (Exception ignored) {}
         }).start();
 
-        // Question option clicks
+        // Option click handling
         for (int i = 0; i < optionButtons.length; i++) {
             final int index = i;
             optionButtons[i].setOnClickListener(v -> checkAnswer(index, optionButtons[index]));
@@ -147,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
         btnHint.setOnClickListener(v -> handleLifeline("hint"));
         btnSkip.setOnClickListener(v -> handleLifeline("skip"));
 
-        // Pause Menu Listeners
+        // Pause Menu Handlers
         btnPause.setOnClickListener(v -> openPauseMenu());
         btnResume.setOnClickListener(v -> layoutMenuOverlay.setVisibility(View.GONE));
 
@@ -512,12 +512,37 @@ public class MainActivity extends AppCompatActivity {
             public void onAdLoaded(@NonNull RewardedAd ad) {
                 rewardedAd = ad;
             }
+
             @Override
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                 rewardedAd = null;
             }
+        });
+    }
+
+    private void showAdForLifeline(String type) {
+        if (rewardedAd != null) {
+            rewardedAd.show(this, rewardItem -> {
+                if ("hint".equals(type)) countHint++;
+                else if ("skip".equals(type)) countSkip++;
+                updateUI();
+                Toast.makeText(MainActivity.this, "Lifeline recharged! 🎁", Toast.LENGTH_SHORT).show();
+            });
+            loadRewardedAd();
+        } else {
+            Toast.makeText(this, "Ad is loading, try again in a few seconds!", Toast.LENGTH_SHORT).show();
+            loadRewardedAd();
         }
+    }
 
-                        }
+    @Override
+    protected void onDestroy() {
+        if (adViewBanner != null) {
+            adViewBanner.destroy();
+        }
+        if (toneGenerator != null) {
+            toneGenerator.release();
+        }
+        super.onDestroy();
+    }
 }
-
