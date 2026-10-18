@@ -151,6 +151,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void setupQuestionBank() {
         riddleList.clear();
+
+        // 1 - 5: Everyday Fun
         riddleList.add(new RiddleItem(
             "🗣️ I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?",
             new String[]{"Echo", "Shadow", "River", "Mirror"}, 0,
@@ -172,9 +174,144 @@ public class MainActivity extends AppCompatActivity {
             "💡 Clue: It melts and gives light!"
         ));
         riddleList.add(new RiddleItem(
-            "🦁 What has a head and a tail but no body?",
+            "🪙 What has a head and a tail but no body?",
             new String[]{"A Coin", "A Snake", "A Worm", "A Comet"}, 0,
             "💡 Clue: You flip it to make a decision!"
+        ));
+
+        // 6 - 10: School & Home Items
+        riddleList.add(new RiddleItem(
+            "✏️ What gets shorter the more it talks and works on paper?",
+            new String[]{"Eraser", "Pencil", "Ruler", "Crayon"}, 1,
+            "💡 Clue: You sharpen it when it gets dull!"
+        ));
+        riddleList.add(new RiddleItem(
+            "🚪 What has many keys but can never open a single door?",
+            new String[]{"Piano", "Lockbox", "Keychain", "Clock"}, 0,
+            "💡 Clue: You press its keys to play sweet music!"
+        ));
+        riddleList.add(new RiddleItem(
+            "⏰ What has two hands and a face, but no arms or legs?",
+            new String[]{"Robot", "Doll", "Clock", "Mirror"}, 2,
+            "💡 Clue: It ticks all day long on the wall!"
+        ));
+        riddleList.add(new RiddleItem(
+            "🧽 What is full of holes but still holds water?",
+            new String[]{"Sieve", "Sponge", "Net", "Bucket"}, 1,
+            "💡 Clue: You use it to wash dishes or clean the bath!"
+        ));
+        riddleList.add(new RiddleItem(
+            "✂️ What has two blades that love to kiss paper and snip shapes?",
+            new String[]{"Scissors", "Knife", "Saw", "Pencil"}, 0,
+            "💡 Clue: Be careful not to run while holding them!"
+        ));
+
+        // 11 - 15: Food & Treats
+        riddleList.add(new RiddleItem(
+            "🍿 I wear a yellow coat, jump when I get hot, and pop into a fluffy white treat. What am I?",
+            new String[]{"Cornflake", "Popcorn", "Marshmallow", "Butter"}, 1,
+            "💡 Clue: You eat this crunchy snack at the movie theater!"
+        ));
+        riddleList.add(new RiddleItem(
+            "🍌 What fruit wears a yellow jacket that you peel before you eat?",
+            new String[]{"Lemon", "Banana", "Pineapple", "Mango"}, 1,
+            "💡 Clue: Monkeys love to eat this fruit!"
+        ));
+        riddleList.add(new RiddleItem(
+            "🍕 What is round like a ball, sliced like a triangle, and comes in a square box?",
+            new String[]{"Pancake", "Pizza", "Cake", "Pie"}, 1,
+            "💡 Clue: Covered in gooey cheese and your favorite toppings!"
+        ));
+        riddleList.add(new RiddleItem(
+            "🧅 What wears many layers of skin and makes you cry without hurting you?",
+            new String[]{"Garlic", "Onion", "Potato", "Pepper"}, 1,
+            "💡 Clue: You chop it in the kitchen for soups and curries!"
+        ));
+        riddleList.add(new RiddleItem(
+            "🍦 I am cold, sweet, and come in flavors like chocolate and berry. If you eat me slowly, I drip! What am I?",
+            new String[]{"Juice", "Ice Cream", "Lollipop", "Cupcake"}, 1,
+            "💡 Clue: Served in a cone on hot sunny days!"
+        ));
+
+        // 16 - 20: Animals & Bugs
+        riddleList.add(new RiddleItem(
+            "🐸 What green creature can jump higher than a building?",
+            new String[]{"Grasshopper", "Frog", "Kangaroo", "All of them (Buildings cannot jump!)"}, 3,
+            "💡 Clue: Think carefully... can buildings jump?"
+        ));
+        riddleList.add(new RiddleItem(
+            "🐝 I fly from flower to flower making sweet golden syrup. What am I?",
+            new String[]{"Butterfly", "Honeybee", "Dragonfly", "Ladybug"}, 1,
+            "💡 Clue: I buzz around the hive and make honey!"
+        ));
+        riddleList.add(new RiddleItem(
+            "🐢 I carry my house everywhere on my back. When I get scared, I tuck inside! What am I?",
+            new String[]{"Snail", "Turtle", "Crab", "Armadillo"}, 1,
+            "💡 Clue: Known for moving slowly and winning the race against the hare!"
+        ));
+        riddleList.add(new RiddleItem(
+            "🦒 I have four tall legs, two tiny horns, and a neck so long I eat leaves from high treetops. What am I?",
+            new String[]{"Elephant", "Giraffe", "Zebra", "Camel"}, 1,
+            "💡 Clue: The tallest animal on the savanna!"
+        ));
+        riddleList.add(new RiddleItem(
+            "🦇 I sleep upside down during the day and fly around at night using my ears to see. What am I?",
+            new String[]{"Owl", "Bat", "Hawk", "Flying Squirrel"}, 1,
+            "💡 Clue: A nocturnal animal often spotted in caves!"
+        ));
+
+        // 21 - 25: Nature & Weather
+        riddleList.add(new RiddleItem(
+            "🌈 What appears after the rain, painted with seven bright colors across the sky?",
+            new String[]{"Sun", "Cloud", "Rainbow", "Kite"}, 2,
+            "💡 Clue: Violet, Indigo, Blue, Green, Yellow, Orange, Red!"
+        ));
+        riddleList.add(new RiddleItem(
+            "👣 The more of me you take behind you, the more you leave on the ground. What am I?",
+            new String[]{"Footsteps", "Breaths", "Minutes", "Pebbles"}, 0,
+            "💡 Clue: You see them stamped in mud or beach sand!"
+        ));
+        riddleList.add(new RiddleItem(
+            "☁️ I fly without wings, I cry without eyes. Whenever I pass through, darkness covers the skies. What am I?",
+            new String[]{"A Kite", "A Cloud", "An Airplane", "The Moon"}, 1,
+            "💡 Clue: It brings rain to the thirsty plants!"
+        ));
+        riddleList.add(new RiddleItem(
+            "🔥 Feed me wood and I live and grow tall. Give me water and I instantly die. What am I?",
+            new String[]{"Plant", "Fire", "Engine", "Camp"}, 1,
+            "💡 Clue: It crackles, keeps you warm, but you must never touch it!"
+        ));
+        riddleList.add(new RiddleItem(
+            "🌊 What can run forever without ever having legs?",
+            new String[]{"A Car", "A River", "A Clock", "Wind"}, 1,
+            "💡 Clue: Water continuously flows down to the sea!"
+        ));
+
+        // 26 - 30: Tricky Teasers
+        riddleList.add(new RiddleItem(
+            "👕 What has a neck and arms, but no head and no legs?",
+            new String[]{"A Robot", "A Shirt", "A Chair", "A Blanket"}, 1,
+            "💡 Clue: You wear it every single day!"
+        ));
+        riddleList.add(new RiddleItem(
+            "🪑 What has four legs, but can never walk even a single step?",
+            new String[]{"A Dog", "A Table", "A Horse", "A Stool"}, 1,
+            "💡 Clue: You sit around it to eat lunch or do your homework!"
+        ));
+        riddleList.add(new RiddleItem(
+            "🪞 If you smile, I smile. If you frown, I frown. What am I?",
+            new String[]{"A Camera", "A Mirror", "A Painting", "A Shadow"}, 1,
+            "💡 Clue: Look straight into it when brushing your teeth!"
+        ));
+        riddleList.add(new RiddleItem(
+            "📖 What has a spine, hundreds of pages, but not a single bone?",
+            new String[]{"A Skeleton", "A Book", "A Magazine", "A Diary"}, 1,
+            "💡 Clue: You open it to read stories and adventures!"
+        ));
+        riddleList.add(new RiddleItem(
+            "👟 What has a tongue, can be tied tightly, but can never speak a word?",
+            new String[]{"A Shoe", "A Bell", "A Snake", "A Backpack"}, 0,
+            "💡 Clue: You tie its laces before running outside to play!"
         ));
     }
 
