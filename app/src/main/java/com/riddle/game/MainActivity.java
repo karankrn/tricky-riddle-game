@@ -51,6 +51,10 @@ public class MainActivity extends AppCompatActivity {
     private int countHint = 1;
     private int countSkip = 1;
 
+    private TextView tvMenuStats;
+    private Button btnToggleSound, btnQuitGame;
+    private boolean isSoundOn = true;
+
     private ToneGenerator toneGenerator;
 
     private RewardedAd rewardedAd;
@@ -96,6 +100,33 @@ public class MainActivity extends AppCompatActivity {
         btnHint = findViewById(R.id.btnHint);
         btnSkip = findViewById(R.id.btnSkip);
         btnPause = findViewById(R.id.btnPause);
+
+        tvMenuStats = findViewById(R.id.tvMenuStats);
+        btnToggleSound = findViewById(R.id.btnToggleSound);
+        btnQuitGame = findViewById(R.id.btnQuitGame);
+
+        // Pause Menu Listeners
+        btnPause.setOnClickListener(v -> openPauseMenu());
+        btnResume.setOnClickListener(v -> layoutMenuOverlay.setVisibility(View.GONE));
+
+        btnToggleSound.setOnClickListener(v -> {
+            isSoundOn = !isSoundOn;
+            btnToggleSound.setText(isSoundOn ? "🔊 Sound: ON" : "🔇 Sound: OFF");
+            Toast.makeText(this, isSoundOn ? "Sound Enabled!" : "Sound Muted!", Toast.LENGTH_SHORT).show();
+        });
+
+        btnRestart.setOnClickListener(v -> {
+            layoutMenuOverlay.setVisibility(View.GONE);
+            restartGameFromBeginning();
+        });
+
+        btnViewLeaderboard.setOnClickListener(v -> {
+            startActivity(new Intent(MainActivity.this, LeaderboardActivity.class));
+        });
+
+        btnChangeAlias.setOnClickListener(v -> promptPlayerAlias(false));
+
+        btnQuitGame.setOnClickListener(v -> finish());
 
         layoutMenuOverlay = findViewById(R.id.layoutMenuOverlay);
         btnResume = findViewById(R.id.btnResume);
