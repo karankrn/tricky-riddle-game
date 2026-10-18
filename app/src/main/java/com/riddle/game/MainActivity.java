@@ -1,11 +1,16 @@
 package com.riddle.game;
 
-import android.content.DialogInterface;
+import android.animation.ObjectAnimator;
+import android.animation.PropertyValuesHolder;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.AudioManager;
+import android.media.ToneGenerator;
 import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
+import android.view.animation.CycleInterpolator;
+import android.view.animation.TranslateAnimation;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -16,6 +21,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.MobileAds;
 import com.google.android.gms.ads.interstitial.InterstitialAd;
@@ -34,6 +40,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnHint, btnSkip, btnPause;
     private LinearLayout layoutMenuOverlay;
     private Button btnResume, btnRestart, btnViewLeaderboard, btnChangeAlias;
+    private AdView adViewBanner;
 
     private int score = 0;
     private int hearts = 3;
@@ -43,12 +50,15 @@ public class MainActivity extends AppCompatActivity {
     private int countHint = 1;
     private int countSkip = 1;
 
+    // ToneGenerator for lag-free audio feedback
+    private ToneGenerator toneGenerator;
+
+    // Google AdMob Ad Units (Official Test IDs)
     private RewardedAd rewardedAd;
     private InterstitialAd interstitialAd;
     private final String TEST_REWARDED_ID = "ca-app-pub-3940256099942544/5224354917";
     private final String TEST_INTERSTITIAL_ID = "ca-app-pub-3940256099942544/1033173712";
 
-    // Question structure
     private static class RiddleItem {
         String question;
         String[] options;
@@ -70,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // Bind Views
+        // Views
         tvPlayerName = findViewById(R.id.tvPlayerName);
         tvScore = findViewById(R.id.tvScore);
         tvLevel = findViewById(R.id.tvLevel);
@@ -93,34 +103,40 @@ public class MainActivity extends AppCompatActivity {
         btnViewLeaderboard = findViewById(R.id.btnViewLeaderboard);
         btnChangeAlias = findViewById(R.id.btnChangeAlias);
 
+        adViewBanner = findViewById(R.id.adViewBanner);
+
+        // Sound effects initialization
+        try {
+            toneGenerator = new ToneGenerator(AudioManager.STREAM_MUSIC, 80);
+        } catch (Exception ignored) {}
+
         loadPlayerAlias();
         setupQuestionBank();
 
-        // Check if alias is missing (first launch)
         if (playerName.equals("Player")) {
             promptPlayerAlias(true);
         } else {
             initGame();
         }
 
-        // Ads initialization & start ad
+        // Initialize Mobile Ads safely in background
         new Thread(() -> {
             try {
                 MobileAds.initialize(MainActivity.this, initializationStatus -> {});
                 runOnUiThread(() -> {
                     loadInterstitialAd();
                     loadRewardedAd();
+                    loadBannerAd();
                 });
             } catch (Exception ignored) {}
         }).start();
 
-        // Option click handlers
+        // Option click handling
         for (int i = 0; i < optionButtons.length; i++) {
             final int index = i;
-            optionButtons[i].setOnClickListener(v -> checkAnswer(index));
+            optionButtons[i].setOnClickListener(v -> checkAnswer(index, optionButtons[index]));
         }
 
-        // Lifelines
         btnHint.setOnClickListener(v -> handleLifeline("hint"));
         btnSkip.setOnClickListener(v -> handleLifeline("skip"));
 
@@ -159,6 +175,11 @@ public class MainActivity extends AppCompatActivity {
             new String[]{"Pencil", "Candle", "Tree", "Giraffe"}, 1,
             "💡 Clue: It melts and gives light!"
         ));
+        riddleList.add(new RiddleItem(
+            "🦁 What has a head and a tail but no body?",
+            new String[]{"A Coin", "A Snake", "A Worm", "A Comet"}, 0,
+            "💡 Clue: You flip it to make a decision!"
+        ));
     }
 
     private void initGame() {
@@ -173,18 +194,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void restartGameFromBeginning() {
-        Toast.makeText(this, "Starting over!", Toast.LENGTH_SHORT).show();
         initGame();
     }
 
     private void loadCurrentRiddle() {
         if (currentLevelIndex >= riddleList.size()) {
             saveScore(score);
-            tvRiddle.setText("🎉 Congratulations " + playerName + "! You beat all riddles!");
+            tvRiddle.setText("🎉 Hurray " + playerName + "! You completed every riddle!");
             tvHint.setText("");
             for (Button b : optionButtons) b.setVisibility(View.GONE);
             btnHint.setEnabled(false);
             btnSkip.setEnabled(false);
+            playSuccessSound();
             return;
         }
 
@@ -201,32 +222,87 @@ public class MainActivity extends AppCompatActivity {
         updateUI();
     }
 
-    private void checkAnswer(int selectedIndex) {
+    private void checkAnswer(int selectedIndex, Button clickedBtn) {
         RiddleItem current = riddleList.get(currentLevelIndex);
         if (selectedIndex == current.correctIndex) {
+            playSuccessSound();
             score += 100;
             saveScore(score);
-            Toast.makeText(this, "🌟 Correct! +100", Toast.LENGTH_SHORT).show();
+            animateScorePulse();
+            Toast.makeText(this, "🌟 Superb! +100 Points!", Toast.LENGTH_SHORT).show();
             currentLevelIndex++;
             loadCurrentRiddle();
         } else {
+            playErrorSound();
+            animateShake(clickedBtn);
             hearts--;
             updateHeartsUI();
+
             if (hearts <= 0) {
-                showGameOverDialog();
+                showReviveOrGameOverDialog();
             } else {
-                Toast.makeText(this, "❌ Wrong! Lost 1 Heart!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "❌ Oops! Lost 1 Heart!", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
-    private void showGameOverDialog() {
+    // High Monetization: Revive Second Chance Prompt
+    private void showReviveOrGameOverDialog() {
         new AlertDialog.Builder(this)
-            .setTitle("💔 Game Over")
-            .setMessage("You lost all 3 hearts! The game will restart with randomized riddles.")
+            .setTitle("💔 Out of Hearts!")
+            .setMessage("Do you want to watch a quick ad to get 2 Hearts and keep your current score?")
             .setCancelable(false)
-            .setPositiveButton("Try Again", (dialog, which) -> restartGameFromBeginning())
+            .setPositiveButton("📺 Revive (Watch Ad)", (dialog, which) -> {
+                showAdToRevive();
+            })
+            .setNegativeButton("Restart from Level 1", (dialog, which) -> {
+                restartGameFromBeginning();
+            })
             .show();
+    }
+
+    private void showAdToRevive() {
+        if (rewardedAd != null) {
+            rewardedAd.show(this, rewardItem -> {
+                hearts = 2;
+                updateHeartsUI();
+                Toast.makeText(MainActivity.this, "💖 Revived with 2 Hearts!", Toast.LENGTH_SHORT).show();
+            });
+            loadRewardedAd();
+        } else {
+            Toast.makeText(this, "Ad is loading, restarting game...", Toast.LENGTH_SHORT).show();
+            restartGameFromBeginning();
+            loadRewardedAd();
+        }
+    }
+
+    // Animations & Sound
+    private void animateShake(View view) {
+        TranslateAnimation shake = new TranslateAnimation(0, 15, 0, 0);
+        shake.setDuration(400);
+        shake.setInterpolator(new CycleInterpolator(4));
+        view.startAnimation(shake);
+    }
+
+    private void animateScorePulse() {
+        ObjectAnimator scaleX = ObjectAnimator.ofFloat(tvScore, "scaleX", 1.0f, 1.25f, 1.0f);
+        ObjectAnimator scaleY = ObjectAnimator.ofFloat(tvScore, "scaleY", 1.0f, 1.25f, 1.0f);
+        scaleX.setDuration(350);
+        scaleY.setDuration(350);
+        scaleX.start();
+        scaleY.start();
+    }
+
+    private void playSuccessSound() {
+        if (toneGenerator != null) {
+            toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2, 180);
+        }
+    }
+
+    private void playErrorSound() {
+        if (toneGenerator != null) {
+            toneGenerator.startTone(ToneGenerator.TONE_CDMA_SOFT_ERROR_LITE, 250);
+        }
     }
 
     private void updateUI() {
@@ -311,7 +387,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Google AdMob Rewarded and Interstitial implementation
+    // Ads logic
+    private void loadBannerAd() {
+        AdRequest adRequest = new AdRequest.Builder().build();
+        adViewBanner.loadAd(adRequest);
+    }
+
     private void loadInterstitialAd() {
         AdRequest adRequest = new AdRequest.Builder().build();
         InterstitialAd.load(this, TEST_INTERSTITIAL_ID, adRequest, new InterstitialAdLoadCallback() {
@@ -361,4 +442,15 @@ public class MainActivity extends AppCompatActivity {
             loadRewardedAd();
         }
     }
+
+    @Override
+    protected void onDestroy() {
+        if (adViewBanner != null) {
+            adViewBanner.destroy();
         }
+        if (toneGenerator != null) {
+            toneGenerator.release();
+        }
+        super.onDestroy();
+    }
+                }
