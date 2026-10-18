@@ -35,25 +35,22 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
-    private TextView tvPlayerName, tvScore, tvLevel, tvHearts, tvRiddle, tvHint, tvMascotDialogue;
+    private TextView tvPlayerName, tvScore, tvLevel, tvHearts, tvRiddle, tvHint, tvMascotDialogue, tvMenuStats;
     private ImageView ivMascot;
     private Button[] optionButtons = new Button[4];
     private Button btnHint, btnSkip, btnPause;
     private LinearLayout layoutMenuOverlay;
-    private Button btnResume, btnRestart, btnViewLeaderboard, btnChangeAlias;
+    private Button btnResume, btnRestart, btnViewLeaderboard, btnChangeAlias, btnToggleSound, btnQuitGame;
     private AdView adViewBanner;
 
     private int score = 0;
     private int hearts = 3;
     private int currentLevelIndex = 0;
     private String playerName = "Player";
+    private boolean isSoundOn = true;
 
     private int countHint = 1;
     private int countSkip = 1;
-
-    private TextView tvMenuStats;
-    private Button btnToggleSound, btnQuitGame;
-    private boolean isSoundOn = true;
 
     private ToneGenerator toneGenerator;
 
@@ -83,6 +80,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        // Core Game Views
         tvPlayerName = findViewById(R.id.tvPlayerName);
         tvScore = findViewById(R.id.tvScore);
         tvLevel = findViewById(R.id.tvLevel);
@@ -101,9 +99,53 @@ public class MainActivity extends AppCompatActivity {
         btnSkip = findViewById(R.id.btnSkip);
         btnPause = findViewById(R.id.btnPause);
 
+        // Menu Views
+        layoutMenuOverlay = findViewById(R.id.layoutMenuOverlay);
         tvMenuStats = findViewById(R.id.tvMenuStats);
+        btnResume = findViewById(R.id.btnResume);
+        btnRestart = findViewById(R.id.btnRestart);
+        btnViewLeaderboard = findViewById(R.id.btnViewLeaderboard);
+        btnChangeAlias = findViewById(R.id.btnChangeAlias);
         btnToggleSound = findViewById(R.id.btnToggleSound);
         btnQuitGame = findViewById(R.id.btnQuitGame);
+
+        adViewBanner = findViewById(R.id.adViewBanner);
+
+        // Initialize sound generator
+        try {
+            toneGenerator = new ToneGenerator(AudioManager.STREAM_MUSIC, 80);
+        } catch (Exception ignored) {}
+
+        loadPlayerAlias();
+        setupQuestionBank();
+
+        if (playerName.equals("Player")) {
+            promptPlayerAlias(true);
+        } else {
+            initGame();
+        }
+
+        // Initialize Ads
+        new Thread(() -> {
+            try {
+                MobileAds.initialize(MainActivity.this, initializationStatus -> {});
+                runOnUiThread(() -> {
+                    loadInterstitialAd();
+                    loadRewardedAd();
+                    loadBannerAd();
+                });
+            } catch (Exception ignored) {}
+        }).start();
+
+        // Question option clicks
+        for (int i = 0; i < optionButtons.length; i++) {
+            final int index = i;
+            optionButtons[i].setOnClickListener(v -> checkAnswer(index, optionButtons[index]));
+        }
+
+        // Lifelines
+        btnHint.setOnClickListener(v -> handleLifeline("hint"));
+        btnSkip.setOnClickListener(v -> handleLifeline("skip"));
 
         // Pause Menu Listeners
         btnPause.setOnClickListener(v -> openPauseMenu());
@@ -125,65 +167,23 @@ public class MainActivity extends AppCompatActivity {
         });
 
         btnChangeAlias.setOnClickListener(v -> promptPlayerAlias(false));
-
         btnQuitGame.setOnClickListener(v -> finish());
+    }
 
-        layoutMenuOverlay = findViewById(R.id.layoutMenuOverlay);
-        btnResume = findViewById(R.id.btnResume);
-        btnRestart = findViewById(R.id.btnRestart);
-        btnViewLeaderboard = findViewById(R.id.btnViewLeaderboard);
-        btnChangeAlias = findViewById(R.id.btnChangeAlias);
+    private void openPauseMenu() {
+        StringBuilder heartStr = new StringBuilder();
+        for (int i = 0; i < hearts; i++) heartStr.append("❤️");
+        for (int i = hearts; i < 3; i++) heartStr.append("🖤");
 
-        adViewBanner = findViewById(R.id.adViewBanner);
-
-        try {
-            toneGenerator = new ToneGenerator(AudioManager.STREAM_MUSIC, 80);
-        } catch (Exception ignored) {}
-
-        loadPlayerAlias();
-        setupQuestionBank();
-
-        if (playerName.equals("Player")) {
-            promptPlayerAlias(true);
-        } else {
-            initGame();
+        if (tvMenuStats != null) {
+            tvMenuStats.setText("Level " + (currentLevelIndex + 1) + " • Score: " + score + " • " + heartStr);
         }
-
-        new Thread(() -> {
-            try {
-                MobileAds.initialize(MainActivity.this, initializationStatus -> {});
-                runOnUiThread(() -> {
-                    loadInterstitialAd();
-                    loadRewardedAd();
-                    loadBannerAd();
-                });
-            } catch (Exception ignored) {}
-        }).start();
-
-        for (int i = 0; i < optionButtons.length; i++) {
-            final int index = i;
-            optionButtons[i].setOnClickListener(v -> checkAnswer(index, optionButtons[index]));
-        }
-
-        btnHint.setOnClickListener(v -> handleLifeline("hint"));
-        btnSkip.setOnClickListener(v -> handleLifeline("skip"));
-
-        btnPause.setOnClickListener(v -> layoutMenuOverlay.setVisibility(View.VISIBLE));
-        btnResume.setOnClickListener(v -> layoutMenuOverlay.setVisibility(View.GONE));
-        btnRestart.setOnClickListener(v -> {
-            layoutMenuOverlay.setVisibility(View.GONE);
-            restartGameFromBeginning();
-        });
-        btnViewLeaderboard.setOnClickListener(v -> {
-            startActivity(new Intent(MainActivity.this, LeaderboardActivity.class));
-        });
-        btnChangeAlias.setOnClickListener(v -> promptPlayerAlias(false));
+        layoutMenuOverlay.setVisibility(View.VISIBLE);
     }
 
     private void setupQuestionBank() {
         riddleList.clear();
 
-        // 1 - 5: Everyday Fun
         riddleList.add(new RiddleItem(
             "🗣️ I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?",
             new String[]{"Echo", "Shadow", "River", "Mirror"}, 0,
@@ -209,8 +209,6 @@ public class MainActivity extends AppCompatActivity {
             new String[]{"A Coin", "A Snake", "A Worm", "A Comet"}, 0,
             "💡 Clue: You flip it to make a decision!"
         ));
-
-        // 6 - 10: School & Home Items
         riddleList.add(new RiddleItem(
             "✏️ What gets shorter the more it talks and works on paper?",
             new String[]{"Eraser", "Pencil", "Ruler", "Crayon"}, 1,
@@ -232,18 +230,6 @@ public class MainActivity extends AppCompatActivity {
             "💡 Clue: You use it to wash dishes or clean the bath!"
         ));
         riddleList.add(new RiddleItem(
-            "✂️ What has two blades that love to kiss paper and snip shapes?",
-            new String[]{"Scissors", "Knife", "Saw", "Pencil"}, 0,
-            "💡 Clue: Be careful not to run while holding them!"
-        ));
-
-        // 11 - 15: Food & Treats
-        riddleList.add(new RiddleItem(
-            "🍿 I wear a yellow coat, jump when I get hot, and pop into a fluffy white treat. What am I?",
-            new String[]{"Cornflake", "Popcorn", "Marshmallow", "Butter"}, 1,
-            "💡 Clue: You eat this crunchy snack at the movie theater!"
-        ));
-        riddleList.add(new RiddleItem(
             "🍌 What fruit wears a yellow jacket that you peel before you eat?",
             new String[]{"Lemon", "Banana", "Pineapple", "Mango"}, 1,
             "💡 Clue: Monkeys love to eat this fruit!"
@@ -254,95 +240,24 @@ public class MainActivity extends AppCompatActivity {
             "💡 Clue: Covered in gooey cheese and your favorite toppings!"
         ));
         riddleList.add(new RiddleItem(
-            "🧅 What wears many layers of skin and makes you cry without hurting you?",
-            new String[]{"Garlic", "Onion", "Potato", "Pepper"}, 1,
-            "💡 Clue: You chop it in the kitchen for soups and curries!"
-        ));
-        riddleList.add(new RiddleItem(
-            "🍦 I am cold, sweet, and come in flavors like chocolate and berry. If you eat me slowly, I drip! What am I?",
-            new String[]{"Juice", "Ice Cream", "Lollipop", "Cupcake"}, 1,
-            "💡 Clue: Served in a cone on hot sunny days!"
-        ));
-
-        // 16 - 20: Animals & Bugs
-        riddleList.add(new RiddleItem(
-            "🐸 What green creature can jump higher than a building?",
-            new String[]{"Grasshopper", "Frog", "Kangaroo", "All of them (Buildings cannot jump!)"}, 3,
-            "💡 Clue: Think carefully... can buildings jump?"
-        ));
-        riddleList.add(new RiddleItem(
-            "🐝 I fly from flower to flower making sweet golden syrup. What am I?",
-            new String[]{"Butterfly", "Honeybee", "Dragonfly", "Ladybug"}, 1,
-            "💡 Clue: I buzz around the hive and make honey!"
-        ));
-        riddleList.add(new RiddleItem(
-            "🐢 I carry my house everywhere on my back. When I get scared, I tuck inside! What am I?",
+            "🐢 I carry my house everywhere on my back. What am I?",
             new String[]{"Snail", "Turtle", "Crab", "Armadillo"}, 1,
-            "💡 Clue: Known for moving slowly and winning the race against the hare!"
+            "💡 Clue: Moves slowly and won the race against the hare!"
         ));
         riddleList.add(new RiddleItem(
-            "🦒 I have four tall legs, two tiny horns, and a neck so long I eat leaves from high treetops. What am I?",
-            new String[]{"Elephant", "Giraffe", "Zebra", "Camel"}, 1,
-            "💡 Clue: The tallest animal on the savanna!"
-        ));
-        riddleList.add(new RiddleItem(
-            "🦇 I sleep upside down during the day and fly around at night using my ears to see. What am I?",
-            new String[]{"Owl", "Bat", "Hawk", "Flying Squirrel"}, 1,
-            "💡 Clue: A nocturnal animal often spotted in caves!"
-        ));
-
-        // 21 - 25: Nature & Weather
-        riddleList.add(new RiddleItem(
-            "🌈 What appears after the rain, painted with seven bright colors across the sky?",
+            "🌈 What appears after the rain with seven bright colors?",
             new String[]{"Sun", "Cloud", "Rainbow", "Kite"}, 2,
-            "💡 Clue: Violet, Indigo, Blue, Green, Yellow, Orange, Red!"
+            "💡 Clue: Red, Orange, Yellow, Green, Blue, Indigo, Violet!"
         ));
         riddleList.add(new RiddleItem(
-            "👣 The more of me you take behind you, the more you leave on the ground. What am I?",
-            new String[]{"Footsteps", "Breaths", "Minutes", "Pebbles"}, 0,
-            "💡 Clue: You see them stamped in mud or beach sand!"
+            "🎈 Fill me with air and I float up high, but poke me and I go POP! What am I?",
+            new String[]{"A Balloon", "A Kite", "A Cloud", "A Bubble"}, 0,
+            "💡 Clue: Tied with ribbons at birthday parties!"
         ));
         riddleList.add(new RiddleItem(
-            "☁️ I fly without wings, I cry without eyes. Whenever I pass through, darkness covers the skies. What am I?",
-            new String[]{"A Kite", "A Cloud", "An Airplane", "The Moon"}, 1,
-            "💡 Clue: It brings rain to the thirsty plants!"
-        ));
-        riddleList.add(new RiddleItem(
-            "🔥 Feed me wood and I live and grow tall. Give me water and I instantly die. What am I?",
-            new String[]{"Plant", "Fire", "Engine", "Camp"}, 1,
-            "💡 Clue: It crackles, keeps you warm, but you must never touch it!"
-        ));
-        riddleList.add(new RiddleItem(
-            "🌊 What can run forever without ever having legs?",
-            new String[]{"A Car", "A River", "A Clock", "Wind"}, 1,
-            "💡 Clue: Water continuously flows down to the sea!"
-        ));
-
-        // 26 - 30: Tricky Teasers
-        riddleList.add(new RiddleItem(
-            "👕 What has a neck and arms, but no head and no legs?",
-            new String[]{"A Robot", "A Shirt", "A Chair", "A Blanket"}, 1,
-            "💡 Clue: You wear it every single day!"
-        ));
-        riddleList.add(new RiddleItem(
-            "🪑 What has four legs, but can never walk even a single step?",
-            new String[]{"A Dog", "A Table", "A Horse", "A Stool"}, 1,
-            "💡 Clue: You sit around it to eat lunch or do your homework!"
-        ));
-        riddleList.add(new RiddleItem(
-            "🪞 If you smile, I smile. If you frown, I frown. What am I?",
-            new String[]{"A Camera", "A Mirror", "A Painting", "A Shadow"}, 1,
-            "💡 Clue: Look straight into it when brushing your teeth!"
-        ));
-        riddleList.add(new RiddleItem(
-            "📖 What has a spine, hundreds of pages, but not a single bone?",
-            new String[]{"A Skeleton", "A Book", "A Magazine", "A Diary"}, 1,
-            "💡 Clue: You open it to read stories and adventures!"
-        ));
-        riddleList.add(new RiddleItem(
-            "👟 What has a tongue, can be tied tightly, but can never speak a word?",
-            new String[]{"A Shoe", "A Bell", "A Snake", "A Backpack"}, 0,
-            "💡 Clue: You tie its laces before running outside to play!"
+            "☂️ What goes up into the air the moment rain comes down?",
+            new String[]{"A Cloud", "An Umbrella", "A Rainbow", "The Sun"}, 1,
+            "💡 Clue: You hold it over your head to stay dry!"
         ));
     }
 
@@ -366,7 +281,7 @@ public class MainActivity extends AppCompatActivity {
             saveScore(score);
             tvRiddle.setText("🎉 Hurray " + playerName + "! You solved every riddle!");
             tvHint.setText("");
-            tvMascotDialogue.setText("🏆 You are a Master Brain!");
+            if (tvMascotDialogue != null) tvMascotDialogue.setText("🏆 You are a Master Brain!");
             for (Button b : optionButtons) b.setVisibility(View.GONE);
             btnHint.setEnabled(false);
             btnSkip.setEnabled(false);
@@ -378,7 +293,9 @@ public class MainActivity extends AppCompatActivity {
         tvLevel.setText("🏆 Level " + (currentLevelIndex + 1));
         tvRiddle.setText(item.question);
         tvHint.setText("");
-        tvMascotDialogue.setText("Can you crack this puzzle, " + playerName + "?");
+        if (tvMascotDialogue != null) {
+            tvMascotDialogue.setText("Can you crack this puzzle, " + playerName + "?");
+        }
 
         for (int i = 0; i < 4; i++) {
             optionButtons[i].setText(item.options[i]);
@@ -396,7 +313,7 @@ public class MainActivity extends AppCompatActivity {
             saveScore(score);
             animateScorePulse();
             animateMascotBounce();
-            tvMascotDialogue.setText("🎉 Woohoo! Super smart!");
+            if (tvMascotDialogue != null) tvMascotDialogue.setText("🎉 Woohoo! Super smart!");
             Toast.makeText(this, "🌟 Awesome! +100 Points!", Toast.LENGTH_SHORT).show();
             currentLevelIndex++;
             loadCurrentRiddle();
@@ -405,7 +322,7 @@ public class MainActivity extends AppCompatActivity {
             animateShake(clickedBtn);
             hearts--;
             updateHeartsUI();
-            tvMascotDialogue.setText("🧐 Oops! Try another guess!");
+            if (tvMascotDialogue != null) tvMascotDialogue.setText("🧐 Oops! Try another guess!");
 
             if (hearts <= 0) {
                 showReviveOrGameOverDialog();
@@ -430,7 +347,7 @@ public class MainActivity extends AppCompatActivity {
             rewardedAd.show(this, rewardItem -> {
                 hearts = 2;
                 updateHeartsUI();
-                tvMascotDialogue.setText("💖 Second Chance! Go for it!");
+                if (tvMascotDialogue != null) tvMascotDialogue.setText("💖 Second Chance! Go for it!");
                 Toast.makeText(MainActivity.this, "💖 Revived with 2 Hearts!", Toast.LENGTH_SHORT).show();
             });
             loadRewardedAd();
@@ -465,13 +382,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void playSuccessSound() {
-        if (toneGenerator != null) {
+        if (isSoundOn && toneGenerator != null) {
             toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP2, 180);
         }
     }
 
     private void playErrorSound() {
-        if (toneGenerator != null) {
+        if (isSoundOn && toneGenerator != null) {
             toneGenerator.startTone(ToneGenerator.TONE_CDMA_SOFT_ERROR_LITE, 250);
         }
     }
@@ -496,7 +413,7 @@ public class MainActivity extends AppCompatActivity {
             if (countHint > 0) {
                 countHint--;
                 tvHint.setText(riddleList.get(currentLevelIndex).hint);
-                tvMascotDialogue.setText("💡 Here is your secret clue!");
+                if (tvMascotDialogue != null) tvMascotDialogue.setText("💡 Here is your secret clue!");
                 updateUI();
             } else {
                 showAdForLifeline("hint");
@@ -505,7 +422,7 @@ public class MainActivity extends AppCompatActivity {
             if (countSkip > 0) {
                 countSkip--;
                 currentLevelIndex++;
-                tvMascotDialogue.setText("🚀 Rocket skip used!");
+                if (tvMascotDialogue != null) tvMascotDialogue.setText("🚀 Rocket skip used!");
                 loadCurrentRiddle();
             } else {
                 showAdForLifeline("skip");
@@ -561,8 +478,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadBannerAd() {
-        AdRequest adRequest = new AdRequest.Builder().build();
-        adViewBanner.loadAd(adRequest);
+        if (adViewBanner != null) {
+            AdRequest adRequest = new AdRequest.Builder().build();
+            adViewBanner.loadAd(adRequest);
+        }
     }
 
     private void loadInterstitialAd() {
@@ -597,32 +516,4 @@ public class MainActivity extends AppCompatActivity {
             public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
                 rewardedAd = null;
             }
-        });
-    }
-
-    private void showAdForLifeline(String type) {
-        if (rewardedAd != null) {
-            rewardedAd.show(this, rewardItem -> {
-                if ("hint".equals(type)) countHint++;
-                else if ("skip".equals(type)) countSkip++;
-                updateUI();
-                Toast.makeText(MainActivity.this, "Lifeline recharged! 🎁", Toast.LENGTH_SHORT).show();
-            });
-            loadRewardedAd();
-        } else {
-            Toast.makeText(this, "Ad is loading, try again in a few seconds!", Toast.LENGTH_SHORT).show();
-            loadRewardedAd();
-        }
-    }
-
-    @Override
-    protected void onDestroy() {
-        if (adViewBanner != null) {
-            adViewBanner.destroy();
-        }
-        if (toneGenerator != null) {
-            toneGenerator.release();
-        }
-        super.onDestroy();
-    }
-                                              }
+      
