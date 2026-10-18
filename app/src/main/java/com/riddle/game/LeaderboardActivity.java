@@ -21,8 +21,12 @@ public class LeaderboardActivity extends AppCompatActivity {
         int highScore = prefs.getInt("high_score", 0);
 
         String text = "🥇 Rank 1\nPlayer: " + topPlayer + "\nScore: " + highScore + " pts\n\nKeep playing to beat your record!";
-        tvLeaderboard.setText(text);
+        if (tvLeaderboard != null) {
+            tvLeaderboard.setText(text);
+        }
 
-        btnBack.setOnClickListener(v -> finish());
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> finish());
+        }
     }
 }
